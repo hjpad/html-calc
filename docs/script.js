@@ -12,13 +12,14 @@ class CalcPadEngine {
         this.variables = {};
     }
 
+    
     processLine(line) {
         const trimmedLine = line.trim();
         
         if (!trimmedLine || trimmedLine.startsWith('#')) {
             return { type: 'text', content: line };
         }
-
+    
         // Check for assignment with trailing "=" (e.g., "sum = a + b =")
         const assignmentWithResultMatch = trimmedLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
         if (assignmentWithResultMatch) {
@@ -43,7 +44,29 @@ class CalcPadEngine {
                 };
             }
         }
-
+    
+        // Check for expression with trailing "=" (e.g., "a + b =")
+        const expressionWithResultMatch = trimmedLine.match(/^(.+?)\s*=\s*$/);
+        if (expressionWithResultMatch) {
+            const expression = expressionWithResultMatch[1];
+            
+            try {
+                const result = this.evaluate(expression);
+                return {
+                    type: 'expression_result',
+                    content: line,
+                    expression: expression,
+                    result: this.formatNumber(result)
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: error.message
+                };
+            }
+        }
+    
         // Check for regular assignment (e.g., "a = 10")
         const assignmentMatch = trimmedLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
         if (assignmentMatch) {
@@ -67,7 +90,7 @@ class CalcPadEngine {
                 };
             }
         }
-
+    
         // Check for interpolation (e.g., "The sum is: {sum}")
         const interpolationMatch = line.match(/\{([^}]+)\}/g);
         if (interpolationMatch) {
@@ -83,7 +106,7 @@ class CalcPadEngine {
             });
             return { type: 'text', content: processedLine };
         }
-
+    
         return { type: 'text', content: line };
     }
 
@@ -164,31 +187,30 @@ class HTMLCalcApp {
         this.outputPreview.innerHTML = output;
     }
 
+    
     renderOutput(processedLines) {
-        let markdownText = '';
+        let htmlParts = [];
 
         processedLines.forEach(line => {
             if (line.type === 'calculation_with_result') {
-                // Add the line with result appended, followed by two spaces for line break
-                markdownText += `${line.variable} = ${line.expression} = **${line.result}**  \n`;
+                // Add the line with result appended
+                htmlParts.push(`<div class="calculation-result">${line.variable} = ${line.expression} = <strong>${line.result}</strong></div>`);
+            } else if (line.type === 'expression_result') {
+                // Expression with result (e.g., "a + b = 30")
+                htmlParts.push(`<div class="calculation-result">${line.expression} = <strong>${line.result}</strong></div>`);
             } else if (line.type === 'calculation') {
-                // Regular assignment, just show as-is with two spaces for line break
-                markdownText += line.content + '  \n';
+                // Regular assignment, just show as-is
+                htmlParts.push(`<div class="calculation-line">${this.escapeHtml(line.content)}</div>`);
             } else if (line.type === 'error') {
-                markdownText += `<div class="error-message"><strong>Error:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>\n`;
+                htmlParts.push(`<div class="error-message"><strong>Error:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>`);
             } else {
-                // Regular text or interpolated text
-                // Empty lines get preserved, other lines get two spaces for line break
-                if (line.content.trim() === '') {
-                    markdownText += '\n';
-                } else {
-                    markdownText += line.content + '  \n';
-                }
+                // Regular text or interpolated text - parse as markdown
+                const htmlOutput = marked.parse(line.content);
+                htmlParts.push(htmlOutput);
             }
         });
 
-        const htmlOutput = marked.parse(markdownText);
-        return htmlOutput || '<div class="text-muted">No output generated</div>';
+        return htmlParts.join('') || '<div class="text-muted">No output generated</div>';
     }
 
     escapeHtml(text) {

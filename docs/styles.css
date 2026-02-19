@@ -145,22 +145,22 @@ header {
 }
 
 .calculation-line {
-    background-color: #e7f3ff;
-    padding: 0.5rem 1rem;
-    margin: 0.5rem 0;
-    border-left: 4px solid #0d6efd;
-    border-radius: 4px;
+    padding: 0.25rem 0;
+    margin: 0.25rem 0;
     font-family: 'Courier New', Courier, monospace;
+    color: #212529;
 }
 
 .calculation-result {
-    background-color: #d1e7dd;
-    padding: 0.5rem 1rem;
-    margin: 0.5rem 0;
-    border-left: 4px solid #198754;
-    border-radius: 4px;
+    padding: 0.25rem 0;
+    margin: 0.25rem 0;
     font-family: 'Courier New', Courier, monospace;
-    font-weight: 600;
+    color: #212529;
+}
+
+.calculation-result strong {
+    font-weight: normal;
+    color: #0d6efd;
 }
 
 .error-message {
