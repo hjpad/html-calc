@@ -12,11 +12,6 @@ class CalcPadEngine {
         this.variables = {};
     }
 
-    
-    
-    
-    
-    
     processLine(line) {
         const trimmedLine = line.trim();
         
@@ -36,7 +31,7 @@ class CalcPadEngine {
     
         // Check for assignment with trailing "=" and optional precision (e.g., "sum = a + b = [2]" or "sum = a + b =")
         // First try to match with precision bracket - match everything that's NOT "= ["
-        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^=]+(?:=[^=\[])*?)\s*=\s*\[(\d+)\]\s*$/);
+        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[(\d+)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
@@ -92,7 +87,7 @@ class CalcPadEngine {
     
         // Check for expression with trailing "=" and optional precision (e.g., "a + b = [2]" or "a + b =")
         // First try with precision bracket - match everything that's NOT "= ["
-        let expressionWithResultMatch = cleanLine.match(/^([^=]+(?:=[^=\[])*?)\s*=\s*\[(\d+)\]\s*$/);
+        let expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*\[(\d+)\]\s*$/);
         if (expressionWithResultMatch) {
             const expression = expressionWithResultMatch[1].trim();
             const precision = parseInt(expressionWithResultMatch[2]);
@@ -192,7 +187,7 @@ class CalcPadEngine {
     }
     
     formatNumber(num, precision = null) {
-        if (typeof num === 'number' || (num && num.constructor && num.constructor.name === 'BigNumber')) {
+        // if (typeof num === 'number' || (num && num.constructor && num.constructor.name === 'BigNumber')) {
             const numValue = typeof num === 'number' ? num : parseFloat(num.toString());
             
             // If precision is specified, use it
@@ -204,8 +199,8 @@ class CalcPadEngine {
             if (Number.isInteger(numValue)) {
                 return numValue.toString();
             }
-            return numValue.toFixed(6).replace(/\.?0+$/, '');
-        }
+            // return numValue.toFixed(6).replace(/\.?0+$/, '');
+        // }
         return num.toString();
     }
 
