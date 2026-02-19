@@ -13,6 +13,7 @@ class CalcPadEngine {
     }
 
     
+    
     processLine(line) {
         const trimmedLine = line.trim();
         
@@ -20,8 +21,18 @@ class CalcPadEngine {
             return { type: 'text', content: line };
         }
     
+        // Extract and remove description (text in single quotes)
+        let description = '';
+        let cleanLine = trimmedLine;
+        
+        const descriptionMatch = trimmedLine.match(/^'([^']+)'\s*(.*)$/);
+        if (descriptionMatch) {
+            description = descriptionMatch[1];
+            cleanLine = descriptionMatch[2].trim();
+        }
+    
         // Check for assignment with trailing "=" (e.g., "sum = a + b =")
-        const assignmentWithResultMatch = trimmedLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
+        const assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2];
@@ -32,6 +43,7 @@ class CalcPadEngine {
                 return {
                     type: 'calculation_with_result',
                     content: line,
+                    description: description,
                     variable: varName,
                     expression: expression,
                     result: this.formatNumber(result)
@@ -46,7 +58,7 @@ class CalcPadEngine {
         }
     
         // Check for expression with trailing "=" (e.g., "a + b =")
-        const expressionWithResultMatch = trimmedLine.match(/^(.+?)\s*=\s*$/);
+        const expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*$/);
         if (expressionWithResultMatch) {
             const expression = expressionWithResultMatch[1];
             
@@ -55,6 +67,7 @@ class CalcPadEngine {
                 return {
                     type: 'expression_result',
                     content: line,
+                    description: description,
                     expression: expression,
                     result: this.formatNumber(result)
                 };
@@ -68,7 +81,7 @@ class CalcPadEngine {
         }
     
         // Check for regular assignment (e.g., "a = 10")
-        const assignmentMatch = trimmedLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+        const assignmentMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
         if (assignmentMatch) {
             const varName = assignmentMatch[1];
             const expression = assignmentMatch[2];
@@ -79,7 +92,9 @@ class CalcPadEngine {
                 return {
                     type: 'calculation',
                     content: line,
+                    description: description,
                     variable: varName,
+                    expression: expression,
                     result: this.formatNumber(result)
                 };
             } catch (error) {
@@ -188,19 +203,25 @@ class HTMLCalcApp {
     }
 
     
+    
     renderOutput(processedLines) {
         let htmlParts = [];
-
+    
         processedLines.forEach(line => {
             if (line.type === 'calculation_with_result') {
-                // Add the line with result appended
-                htmlParts.push(`<div class="calculation-result">${line.variable} = ${line.expression} = <strong>${line.result}</strong></div>`);
+                const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
+                htmlParts.push(`<div class="calculation-result">${desc}${line.variable} = ${line.expression} = <strong>${line.result}</strong></div>`);
             } else if (line.type === 'expression_result') {
-                // Expression with result (e.g., "a + b = 30")
-                htmlParts.push(`<div class="calculation-result">${line.expression} = <strong>${line.result}</strong></div>`);
+                const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
+                htmlParts.push(`<div class="calculation-result">${desc}${line.expression} = <strong>${line.result}</strong></div>`);
             } else if (line.type === 'calculation') {
-                // Regular assignment, just show as-is
-                htmlParts.push(`<div class="calculation-line">${this.escapeHtml(line.content)}</div>`);
+                const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
+                // Remove the quoted description from the content display
+                let displayContent = line.content;
+                if (line.description) {
+                    displayContent = displayContent.replace(/^'[^']+'/, '').trim();
+                }
+                htmlParts.push(`<div class="calculation-line">${desc}${this.escapeHtml(displayContent)}</div>`);
             } else if (line.type === 'error') {
                 htmlParts.push(`<div class="error-message"><strong>Error:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>`);
             } else {
@@ -209,7 +230,7 @@ class HTMLCalcApp {
                 htmlParts.push(htmlOutput);
             }
         });
-
+    
         return htmlParts.join('') || '<div class="text-muted">No output generated</div>';
     }
 

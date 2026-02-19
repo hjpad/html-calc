@@ -101,20 +101,18 @@ header {
 .output-content h4,
 .output-content h5,
 .output-content h6 {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
     color: #212529;
 }
 
 .output-content h1 {
     font-size: 2rem;
-    border-bottom: 2px solid #dee2e6;
     padding-bottom: 0.5rem;
 }
 
 .output-content h2 {
     font-size: 1.5rem;
-    border-bottom: 1px solid #dee2e6;
     padding-bottom: 0.3rem;
 }
 
