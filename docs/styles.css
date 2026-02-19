@@ -161,6 +161,12 @@ header {
     color: #0d6efd;
 }
 
+.calculation-description {
+    color: #6c757d;
+    font-style: italic;
+    margin-right: 0.5rem;
+}
+
 .error-message {
     background-color: #f8d7da;
     color: #842029;

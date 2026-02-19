@@ -14,6 +14,9 @@ class CalcPadEngine {
 
     
     
+    
+    
+    
     processLine(line) {
         const trimmedLine = line.trim();
         
@@ -31,11 +34,13 @@ class CalcPadEngine {
             cleanLine = descriptionMatch[2].trim();
         }
     
-        // Check for assignment with trailing "=" (e.g., "sum = a + b =")
-        const assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
+        // Check for assignment with trailing "=" and optional precision (e.g., "sum = a + b = [2]" or "sum = a + b =")
+        // First try to match with precision bracket - match everything that's NOT "= ["
+        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^=]+(?:=[^=\[])*?)\s*=\s*\[(\d+)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
-            const expression = assignmentWithResultMatch[2];
+            const expression = assignmentWithResultMatch[2].trim();
+            const precision = parseInt(assignmentWithResultMatch[3]);
             
             try {
                 const result = this.evaluate(expression);
@@ -46,7 +51,35 @@ class CalcPadEngine {
                     description: description,
                     variable: varName,
                     expression: expression,
-                    result: this.formatNumber(result)
+                    result: this.formatNumber(result, precision),
+                    precision: precision
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: error.message
+                };
+            }
+        }
+        
+        // Then try without precision bracket
+        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
+        if (assignmentWithResultMatch) {
+            const varName = assignmentWithResultMatch[1];
+            const expression = assignmentWithResultMatch[2].trim();
+            
+            try {
+                const result = this.evaluate(expression);
+                this.variables[varName] = result;
+                return {
+                    type: 'calculation_with_result',
+                    content: line,
+                    description: description,
+                    variable: varName,
+                    expression: expression,
+                    result: this.formatNumber(result, null),
+                    precision: null
                 };
             } catch (error) {
                 return {
@@ -57,10 +90,12 @@ class CalcPadEngine {
             }
         }
     
-        // Check for expression with trailing "=" (e.g., "a + b =")
-        const expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*$/);
+        // Check for expression with trailing "=" and optional precision (e.g., "a + b = [2]" or "a + b =")
+        // First try with precision bracket - match everything that's NOT "= ["
+        let expressionWithResultMatch = cleanLine.match(/^([^=]+(?:=[^=\[])*?)\s*=\s*\[(\d+)\]\s*$/);
         if (expressionWithResultMatch) {
-            const expression = expressionWithResultMatch[1];
+            const expression = expressionWithResultMatch[1].trim();
+            const precision = parseInt(expressionWithResultMatch[2]);
             
             try {
                 const result = this.evaluate(expression);
@@ -69,7 +104,32 @@ class CalcPadEngine {
                     content: line,
                     description: description,
                     expression: expression,
-                    result: this.formatNumber(result)
+                    result: this.formatNumber(result, precision),
+                    precision: precision
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: error.message
+                };
+            }
+        }
+        
+        // Then try without precision bracket
+        expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*$/);
+        if (expressionWithResultMatch) {
+            const expression = expressionWithResultMatch[1].trim();
+            
+            try {
+                const result = this.evaluate(expression);
+                return {
+                    type: 'expression_result',
+                    content: line,
+                    description: description,
+                    expression: expression,
+                    result: this.formatNumber(result, null),
+                    precision: null
                 };
             } catch (error) {
                 return {
@@ -84,7 +144,7 @@ class CalcPadEngine {
         const assignmentMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
         if (assignmentMatch) {
             const varName = assignmentMatch[1];
-            const expression = assignmentMatch[2];
+            const expression = assignmentMatch[2].trim();
             
             try {
                 const result = this.evaluate(expression);
@@ -95,7 +155,8 @@ class CalcPadEngine {
                     description: description,
                     variable: varName,
                     expression: expression,
-                    result: this.formatNumber(result)
+                    result: this.formatNumber(result),
+                    precision: null
                 };
             } catch (error) {
                 return {
@@ -129,10 +190,17 @@ class CalcPadEngine {
         const scope = { ...this.variables };
         return this.math.evaluate(expression, scope);
     }
-
-    formatNumber(num) {
+    
+    formatNumber(num, precision = null) {
         if (typeof num === 'number' || (num && num.constructor && num.constructor.name === 'BigNumber')) {
             const numValue = typeof num === 'number' ? num : parseFloat(num.toString());
+            
+            // If precision is specified, use it
+            if (precision !== null) {
+                return numValue.toFixed(precision);
+            }
+            
+            // Otherwise, use default formatting
             if (Number.isInteger(numValue)) {
                 return numValue.toString();
             }
