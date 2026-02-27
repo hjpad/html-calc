@@ -330,9 +330,12 @@ class CalcPadEngine {
                 unitStr = parts.slice(1).join(' ');
                 // Remove spaces between units (e.g., "m / s" -> "m/s")
                 unitStr = unitStr.replace(/\s+/g, '');
+                // Convert exponents to superscript (e.g., "m^2" -> "m<sup>2</sup>")
+                unitStr = unitStr.replace(/\^(-?\d+)/g, '<sup>$1</sup>');
             } catch (e) {
                 // Fallback to formatUnits if format fails
                 unitStr = num.formatUnits().replace(/\s+/g, '');
+                unitStr = unitStr.replace(/\^(-?\d+)/g, '<sup>$1</sup>');
             }
             
             if (precision !== null) {
@@ -432,10 +435,13 @@ class HTMLCalcApp {
         processedLines.forEach(line => {
             if (line.type === 'calculation_with_result') {
                 const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
-                htmlParts.push(`<div class="calculation-result">${desc}${line.variable} = ${line.expression} = <strong>${line.result}</strong></div>`);
+                const formattedVariable = this.formatExpression(line.variable);
+                const formattedExpression = this.formatExpression(line.expression);
+                htmlParts.push(`<div class="calculation-result">${desc}${formattedVariable} = ${formattedExpression} = <strong>${line.result}</strong></div>`);
             } else if (line.type === 'expression_result') {
                 const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
-                htmlParts.push(`<div class="calculation-result">${desc}${line.expression} = <strong>${line.result}</strong></div>`);
+                const formattedExpression = this.formatExpression(line.expression);
+                htmlParts.push(`<div class="calculation-result">${desc}${formattedExpression} = <strong>${line.result}</strong></div>`);
             } else if (line.type === 'calculation') {
                 const desc = line.description ? `<span class="calculation-description">${this.escapeHtml(line.description)}</span> ` : '';
                 // Remove the quoted description from the content display
@@ -443,7 +449,9 @@ class HTMLCalcApp {
                 if (line.description) {
                     displayContent = displayContent.replace(/^'[^']+'/, '').trim();
                 }
-                htmlParts.push(`<div class="calculation-line">${desc}${this.escapeHtml(displayContent)}</div>`);
+                // Format the display content for subscripts and superscripts
+                const formattedContent = this.formatExpression(displayContent);
+                htmlParts.push(`<div class="calculation-line">${desc}${formattedContent}</div>`);
             } else if (line.type === 'error') {
                 htmlParts.push(`<div class="error-message"><strong>Error:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>`);
             } else {
@@ -454,6 +462,24 @@ class HTMLCalcApp {
         });
     
         return htmlParts.join('') || '<div class="text-muted">No output generated</div>';
+    }
+
+    formatExpression(expression) {
+        // Convert subscripts: variable_subscript -> variable<sub>subscript</sub>
+        // This handles patterns like "F_tot", "T_x,y", etc.
+        expression = expression.replace(/([a-zA-Z_][a-zA-Z0-9_]*)_([a-zA-Z0-9,]+)/g, '$1<sub>$2</sub>');
+        
+        // Convert exponents to superscript in the expression
+        // This handles patterns like "m^2", "s^2", etc.
+        expression = expression.replace(/\^(-?\d+)/g, '<sup>$1</sup>');
+        
+        return expression;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     escapeHtml(text) {
