@@ -6,6 +6,13 @@ class CalcPadEngine {
             number: 'BigNumber',
             precision: 64
         });
+
+        // Create unit-aware math instance
+        this.unitMath = math.create(math.all);
+        this.unitMath.config({
+            number: 'BigNumber',
+            precision: 64
+        });
     }
 
     reset() {
@@ -18,6 +25,8 @@ class CalcPadEngine {
         if (!trimmedLine || trimmedLine.startsWith('#')) {
             return { type: 'text', content: line };
         }
+
+
     
         // Extract and remove description (text in single quotes)
         let description = '';
@@ -28,6 +37,67 @@ class CalcPadEngine {
             description = descriptionMatch[1];
             cleanLine = descriptionMatch[2].trim();
         }
+
+        // Check for unit conversion (e.g., "5 m to cm =" or "distance to ft =")
+        const unitConversionMatch = cleanLine.match(/^(.+?)\s+to\s+([a-zA-Z]+(?:\/[a-zA-Z]+)?)\s*=\s*(?:\[(\d+)\])?\s*$/);
+        if (unitConversionMatch) {
+            const expression = unitConversionMatch[1].trim();
+            const targetUnit = unitConversionMatch[2].trim();
+            const precision = unitConversionMatch[3] ? parseInt(unitConversionMatch[3]) : null;
+            
+            try {
+                const result = this.evaluate(expression);
+                const converted = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+                
+                return {
+                    type: 'expression_result',
+                    content: line,
+                    description: description,
+                    expression: `${expression} to ${targetUnit}`,
+                    result: this.formatNumber(converted, precision),
+                    precision: precision
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: error.message
+                };
+            }
+        }
+
+        // Check for assignment with unit conversion (e.g., "distance = 5 m to ft = [2]")
+        const assignmentUnitMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s+to\s+([a-zA-Z]+(?:\/[a-zA-Z]+)?)\s*=\s*(?:\[(\d+)\])?\s*$/);
+        if (assignmentUnitMatch) {
+            const varName = assignmentUnitMatch[1];
+            const expression = assignmentUnitMatch[2].trim();
+            const targetUnit = assignmentUnitMatch[3].trim();
+            const precision = assignmentUnitMatch[4] ? parseInt(assignmentUnitMatch[4]) : null;
+            
+            try {
+                const result = this.evaluate(expression);
+                const converted = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+                this.variables[varName] = converted;
+                
+                return {
+                    type: 'calculation_with_result',
+                    content: line,
+                    description: description,
+                    variable: varName,
+                    expression: `${expression} to ${targetUnit}`,
+                    result: this.formatNumber(converted, precision),
+                    precision: precision
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: error.message
+                };
+            }
+        }
+
+
     
         // Check for assignment with trailing "=" and optional precision (e.g., "sum = a + b = [2]" or "sum = a + b =")
         // First try to match with precision bracket - match everything that's NOT "= ["
@@ -183,24 +253,50 @@ class CalcPadEngine {
 
     evaluate(expression) {
         const scope = { ...this.variables };
-        return this.math.evaluate(expression, scope);
+        
+        try {
+            // Try to evaluate with unit support first
+            const result = this.unitMath.evaluate(expression, scope);
+            return result;
+        } catch (unitError) {
+            // Fallback to regular evaluation if unit parsing fails
+            try {
+                return this.math.evaluate(expression, scope);
+            } catch (error) {
+                throw error;
+            }
+        }
     }
     
     formatNumber(num, precision = null) {
-        // if (typeof num === 'number' || (num && num.constructor && num.constructor.name === 'BigNumber')) {
-            const numValue = typeof num === 'number' ? num : parseFloat(num.toString());
+        // Check if it's a unit object from math.js
+        if (num && typeof num === 'object' && num.constructor && num.constructor.name === 'Unit') {
+            const numValue = parseFloat(num.toNumber());
+            const unitStr = num.formatUnits();
             
-            // If precision is specified, use it
             if (precision !== null) {
-                return numValue.toFixed(precision);
+                return numValue.toFixed(precision) + ' ' + unitStr;
             }
             
-            // Otherwise, use default formatting
             if (Number.isInteger(numValue)) {
-                return numValue.toString();
+                return numValue.toString() + ' ' + unitStr;
             }
-            // return numValue.toFixed(6).replace(/\.?0+$/, '');
-        // }
+            
+            return num.toString();
+        }
+        
+        const numValue = typeof num === 'number' ? num : parseFloat(num.toString());
+        
+        // If precision is specified, use it
+        if (precision !== null) {
+            return numValue.toFixed(precision);
+        }
+        
+        // Otherwise, use default formatting
+        if (Number.isInteger(numValue)) {
+            return numValue.toString();
+        }
+        
         return num.toString();
     }
 
