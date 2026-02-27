@@ -1,7 +1,12 @@
 {
-  "name": "html_calcs",
-  "short_name": "html_calcs",
-  "description": "A test for a general purpose calculator",
+  "name": "html_calc",
+  "short_name": "html_calc",
+  "description": "A browser-based calculator IDE",
+  "start_url": "/html-calc/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "orientation": "any",
   "icons": [
     {
       "src": "images/favicons/android-chrome-192x192.png",
