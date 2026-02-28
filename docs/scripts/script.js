@@ -182,6 +182,37 @@ class CalcPadEngine {
                 };
             }
         }
+
+        // Check for assignment with result and unit conversion using | (e.g., "var = expr = | unit")
+        let assignmentWithResultAndPipeUnitMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\|\s*(.+)\s*$/);
+        if (assignmentWithResultAndPipeUnitMatch) {
+            const varName = assignmentWithResultAndPipeUnitMatch[1];
+            const expression = assignmentWithResultAndPipeUnitMatch[2].trim();
+            const targetUnit = assignmentWithResultAndPipeUnitMatch[3].trim();
+
+            try {
+                const result = this.evaluate(expression);
+                const finalResult = await this.convertWithUnits(result, targetUnit);
+                this.variables[varName] = finalResult;
+                
+                return {
+                    type: 'calculation_with_result',
+                    content: line,
+                    description: description,
+                    variable: varName,
+                    expression: expression,
+                    result: this.formatNumber(finalResult, null) + ` ${targetUnit}`,
+                    precision: null
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: `Assignment/Conversion Error: ${error.message}`
+                };
+            }
+        }
+
     
         // Check for assignment with precision only (e.g., "sum = a + b = [2]")
         assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\[(\d+)\]\s*$/);
@@ -243,7 +274,9 @@ class CalcPadEngine {
         if (assignmentWithUnitConversionMatch) {
             const varName = assignmentWithUnitConversionMatch[1];
             const expression = assignmentWithUnitConversionMatch[2].trim();
-            const bracketContent = assignmentWithUnitConversionMatch[3].trim();
+            const bracketContent = assignmentWithUnitConversionMatch[3]
+            // // Use the content from either the bracket or the pipe
+            // const bracketContent = assignmentWithUnitConversionMatch[3] || assignmentWithUnitConversionMatch[4];
 
             // This regex is simpler and assumes the bracket only contains the unit
             const targetUnit = bracketContent;
@@ -276,7 +309,9 @@ class CalcPadEngine {
         let expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
         if (expressionWithResultMatch) {
             const expression = expressionWithResultMatch[1].trim();
-            const bracketContent = expressionWithResultMatch[2].trim();
+            const bracketContent = expressionWithResultMatch[2]
+            // // Use content from either bracket or pipe
+            // const bracketContent = (expressionWithResultMatch[2] || expressionWithResultMatch[3] || '').trim();
             
             // Parse bracket content - could be "2, mm" or "mm, 2" or just "2" or just "mm"
             const parts = bracketContent.split(',').map(p => p.trim());
