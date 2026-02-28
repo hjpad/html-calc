@@ -112,10 +112,14 @@ header {
 }
 
 .output-content {
-    flex: 1;
+    /* font-family: Georgia, 'Times New Roman', Times, serif; */
+    font-family: Verdana, sans-serif;
+    padding: 1rem;
+    height: calc(100vh - 100px);
     overflow-y: auto;
-    padding: 1.5rem;
-    background-color: #ffffff;
+    background-color: #fff;
+    border-radius: 0 0 0.25rem 0.25rem;
+    line-height: 1.0;
 }
 
 .output-content h1,
@@ -124,24 +128,32 @@ header {
 .output-content h4,
 .output-content h5,
 .output-content h6 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
     color: #212529;
 }
 
 .output-content h1 {
     font-size: 2rem;
+    margin-top: 0.5rem;
     padding-bottom: 0.5rem;
 }
 
 .output-content h2 {
     font-size: 1.5rem;
-    padding-bottom: 0.3rem;
+    margin-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.output-content h3 {
+    font-size: 1rem;
+    margin-top: 0.25rem;
+    padding-bottom: 0.25rem;
 }
 
 .output-content p {
     margin-bottom: 1rem;
-    line-height: 1.6;
+    /* line-height: 1.6; */
 }
 
 .output-content code {
@@ -168,14 +180,14 @@ header {
 .calculation-line {
     padding: 0.25rem 0;
     margin: 0.25rem 0;
-    font-family: 'Courier New', Courier, monospace;
+    /* font-family: 'Courier New', Courier, monospace; */
     color: #212529;
 }
 
 .calculation-result {
     padding: 0.25rem 0;
     margin: 0.25rem 0;
-    font-family: 'Courier New', Courier, monospace;
+    /* font-family: 'Courier New', Courier, monospace; */
     color: #212529;
 }
 

@@ -64,6 +64,11 @@ class CalcPadEngine {
 
     async processLine(line) {
         const trimmedLine = line.trim();
+
+        // Preserve blank lines
+        if (!trimmedLine) {
+            return { type: 'text', content: '&nbsp;' };
+        }
         
         if (!trimmedLine || trimmedLine.startsWith('#')) {
             return { type: 'text', content: line };
