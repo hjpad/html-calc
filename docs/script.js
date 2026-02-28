@@ -422,6 +422,9 @@ class HTMLCalcApp {
 
         // Setup mobile view toggle
         this.setupMobileViewToggle();
+
+        // Setup swipe gestures
+        this.setupSwipeGestures();
     }
 
     setupScrollSync() {
@@ -507,6 +510,55 @@ class HTMLCalcApp {
                 this.inputEditor.scrollTop = inputScrollTop;
             }, 50);
         });
+    }
+
+    setupSwipeGestures() {
+        const editorPanel = document.querySelector('.editor-panel');
+        const outputPanel = document.querySelector('.output-panel');
+        
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50; // Minimum distance for a swipe to be recognized
+        
+        // Swipe left on editor to show output
+        editorPanel.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        editorPanel.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleEditorSwipe();
+        }, { passive: true });
+        
+        const handleEditorSwipe = () => {
+            const swipeDistance = touchStartX - touchEndX;
+            
+            // Swipe left (positive distance)
+            if (swipeDistance > minSwipeDistance) {
+                // Trigger the show output button click
+                document.getElementById('showOutputBtn').click();
+            }
+        };
+        
+        // Swipe right on output to show editor
+        outputPanel.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        outputPanel.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleOutputSwipe();
+        }, { passive: true });
+        
+        const handleOutputSwipe = () => {
+            const swipeDistance = touchEndX - touchStartX;
+            
+            // Swipe right (positive distance)
+            if (swipeDistance > minSwipeDistance) {
+                // Trigger the show input button click
+                document.getElementById('showInputBtn').click();
+            }
+        };
     }
 
     calculate() {

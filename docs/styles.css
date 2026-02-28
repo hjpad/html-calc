@@ -227,8 +227,23 @@ header {
     background: #555;
 }
 
+/* Prevent iOS zoom on input focus */
+@supports (-webkit-touch-callout: none) {
+    /* iOS specific styles */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+    html, body {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+    }
+
     .main-content .row {
         flex-direction: column;
     }
@@ -245,6 +260,7 @@ header {
         right: 0;
         bottom: 0;
         transition: transform 0.3s ease;
+        overflow: hidden;
     }
 
     .editor-panel {
@@ -280,6 +296,13 @@ header {
 
     .mobile-view-toggle.hidden {
         display: none;
+    }
+
+    /* Ensure textarea and output content don't cause page scroll */
+    .editor-textarea,
+    .output-content {
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
