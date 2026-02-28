@@ -24,12 +24,6 @@ header {
     font-weight: 600;
 }
 
-/* #calculateBtn {
-    font-weight: 500;
-    padding: 0.5rem 1.5rem;
-    transition: all 0.3s ease;
-} */
-
 #calculateBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -338,6 +332,30 @@ header {
 
 .dropdown-menu .btn-outline-secondary:focus {
     box-shadow: none;
+}
+
+.dropdown-menu #fontSizeInput {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border: none;
+    background: transparent;
+}
+
+.dropdown-menu #fontSizeInput:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.dropdown-menu #fontSizeInput::-webkit-inner-spin-button,
+.dropdown-menu #fontSizeInput::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+/* Dark theme for font size input */
+[data-bs-theme="dark"] .dropdown-menu #fontSizeInput {
+    background-color: transparent;
+    color: #dee2e6;
+    border: none;
 }
 
 /* Dark theme styles */
