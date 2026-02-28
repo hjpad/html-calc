@@ -88,8 +88,45 @@ class CalcPadEngine {
         cleanLine = cleanLine.replace(/(\d+)\s*C\b/g, '$1 degC'); // Number followed by C
         cleanLine = cleanLine.replace(/(\d+)\s*F\b/g, '$1 degF'); // Number followed by F
 
+        // New rule for re-assignment with unit conversion only (e.g., "F = [kN]")
+        const reassignWithUnitMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*\[([^\]]+)\]\s*$/);
+        if (reassignWithUnitMatch) {
+            const varName = reassignWithUnitMatch[1];
+            const targetUnit = reassignWithUnitMatch[2].trim();
+
+            if (this.variables[varName] !== undefined) {
+                try {
+                    const originalValue = this.variables[varName];
+                    const convertedValue = await this.convertWithUnits(originalValue, targetUnit);
+                    this.variables[varName] = convertedValue; // Update the variable with the new unit
+
+                    return {
+                        type: 'calculation_with_result',
+                        content: line,
+                        description: description,
+                        variable: varName,
+                        expression: this.formatNumber(originalValue, null),
+                        result: this.formatNumber(convertedValue, null),
+                        precision: null
+                    };
+                } catch (error) {
+                    return {
+                        type: 'error',
+                        content: line,
+                        error: `Error #805: ${error.message}`
+                    };
+                }
+            } else {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: `Error: Variable '${varName}' not defined before conversion.`
+                };
+            }
+        }
+
         // Check for assignment with trailing "=" and optional precision/unit in either order
-        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
+        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=?\s*\[([^\]]+)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
