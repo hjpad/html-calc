@@ -89,7 +89,7 @@ class CalcPadEngine {
         cleanLine = cleanLine.replace(/(\d+)\s*F\b/g, '$1 degF'); // Number followed by F
 
         // Check for assignment with trailing "=" and optional precision/unit in either order
-        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
+        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
@@ -155,7 +155,7 @@ class CalcPadEngine {
         }
         
         // Check for assignment with unit only (e.g., "speed = 100 km/h = [m/s]")
-        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\],\d][^\]]*)\]\s*$/);
+        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\[([^\],\d][^\]]*)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
@@ -184,7 +184,7 @@ class CalcPadEngine {
         }
     
         // Check for assignment with precision only (e.g., "sum = a + b = [2]")
-        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[(\d+)\]\s*$/);
+        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*\[(\d+)\]\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
@@ -212,7 +212,7 @@ class CalcPadEngine {
         }
         
         // Then try without precision bracket
-        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*$/);
+        assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*=\s*$/);
         if (assignmentWithResultMatch) {
             const varName = assignmentWithResultMatch[1];
             const expression = assignmentWithResultMatch[2].trim();
@@ -239,7 +239,7 @@ class CalcPadEngine {
         }
 
         // Check for assignment with unit conversion in brackets (e.g., "var = expression [unit]")
-        let assignmentWithUnitConversionMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*\[([^\]]+)\]\s*$/);
+        let assignmentWithUnitConversionMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+?)\s*\[([^\]]+)\]\s*$/);
         if (assignmentWithUnitConversionMatch) {
             const varName = assignmentWithUnitConversionMatch[1];
             const expression = assignmentWithUnitConversionMatch[2].trim();
@@ -402,7 +402,7 @@ class CalcPadEngine {
         }
     
         // Check for regular assignment (e.g., "a = 10")
-        const assignmentMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+        const assignmentMatch = cleanLine.match(/^([a-zA-Z\u0370-\u03FF_][a-zA-Z0-9\u0370-\u03FF_]*)\s*=\s*(.+)$/);
         if (assignmentMatch) {
             const varName = assignmentMatch[1];
             const expression = assignmentMatch[2].trim();
@@ -449,6 +449,13 @@ class CalcPadEngine {
 
     evaluate(expression) {
         const scope = { ...this.variables };
+
+        // Add pi to the scope, converting to BigNumber if needed
+        if (this.unitMath.config().number === 'BigNumber') {
+            scope.π = this.unitMath.bignumber(Math.PI);
+        } else {
+            scope.π = Math.PI;
+        }
         
         try {
             // Try to evaluate with unit support first
