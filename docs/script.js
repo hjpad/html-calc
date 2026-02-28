@@ -36,35 +36,62 @@ class CalcPadEngine {
             cleanLine = descriptionMatch[2].trim();
         }
     
-        // Check for assignment with trailing "=" and optional precision/unit (e.g., "speed = 100 km/h = [2, m/s]")
-        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[(\d+)\s*,\s*([^\]]+)\]\s*$/);
-        if (assignmentWithResultMatch) {
-            const varName = assignmentWithResultMatch[1];
-            const expression = assignmentWithResultMatch[2].trim();
-            const precision = parseInt(assignmentWithResultMatch[3]);
-            const targetUnit = assignmentWithResultMatch[4].trim();
-            
-            try {
-                const result = this.evaluate(expression);
-                const converted = this.unitMath.evaluate(`${result} to ${targetUnit}`);
-                this.variables[varName] = converted;
-                return {
-                    type: 'calculation_with_result',
-                    content: line,
-                    description: description,
-                    variable: varName,
-                    expression: expression,
-                    result: this.formatNumber(converted, precision),
-                    precision: precision
-                };
-            } catch (error) {
-                return {
-                    type: 'error',
-                    content: line,
-                    error: error.message
-                };
+        // Check for assignment with trailing "=" and optional precision/unit in either order
+    let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
+    if (assignmentWithResultMatch) {
+        const varName = assignmentWithResultMatch[1];
+        const expression = assignmentWithResultMatch[2].trim();
+        const bracketContent = assignmentWithResultMatch[3].trim();
+        
+        // Parse bracket content - could be "2, mm" or "mm, 2"
+        const parts = bracketContent.split(',').map(p => p.trim());
+        let precision = null;
+        let targetUnit = null;
+        
+        if (parts.length === 2) {
+            // Check which part is the number
+            if (!isNaN(parts[0])) {
+                precision = parseInt(parts[0]);
+                targetUnit = parts[1];
+            } else if (!isNaN(parts[1])) {
+                precision = parseInt(parts[1]);
+                targetUnit = parts[0];
+            }
+        } else if (parts.length === 1) {
+            // Single value - check if it's a number or unit
+            if (!isNaN(parts[0])) {
+                precision = parseInt(parts[0]);
+            } else {
+                targetUnit = parts[0];
             }
         }
+        
+        try {
+            const result = this.evaluate(expression);
+            let finalResult = result;
+            
+            if (targetUnit) {
+                finalResult = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+            }
+            
+            this.variables[varName] = finalResult;
+            return {
+                type: 'calculation_with_result',
+                content: line,
+                description: description,
+                variable: varName,
+                expression: expression,
+                result: this.formatNumber(finalResult, precision),
+                precision: precision
+            };
+        } catch (error) {
+            return {
+                type: 'error',
+                content: line,
+                error: error.message
+            };
+        }
+    }
         
         // Check for assignment with unit only (e.g., "speed = 100 km/h = [m/s]")
         assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\],\d][^\]]*)\]\s*$/);
@@ -150,22 +177,49 @@ class CalcPadEngine {
             }
         }
     
-        // Check for expression with precision and unit (e.g., "100 km/h = [2, m/s]")
-        let expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*\[(\d+)\s*,\s*([^\]]+)\]\s*$/);
+        // Check for expression with precision and/or unit in brackets
+        let expressionWithResultMatch = cleanLine.match(/^(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
         if (expressionWithResultMatch) {
             const expression = expressionWithResultMatch[1].trim();
-            const precision = parseInt(expressionWithResultMatch[2]);
-            const targetUnit = expressionWithResultMatch[3].trim();
+            const bracketContent = expressionWithResultMatch[2].trim();
+            
+            // Parse bracket content - could be "2, mm" or "mm, 2" or just "2" or just "mm"
+            const parts = bracketContent.split(',').map(p => p.trim());
+            let precision = null;
+            let targetUnit = null;
+            
+            if (parts.length === 2) {
+                // Check which part is the number
+                if (!isNaN(parts[0])) {
+                    precision = parseInt(parts[0]);
+                    targetUnit = parts[1];
+                } else if (!isNaN(parts[1])) {
+                    precision = parseInt(parts[1]);
+                    targetUnit = parts[0];
+                }
+            } else if (parts.length === 1) {
+                // Single value - check if it's a number or unit
+                if (!isNaN(parts[0])) {
+                    precision = parseInt(parts[0]);
+                } else {
+                    targetUnit = parts[0];
+                }
+            }
             
             try {
                 const result = this.evaluate(expression);
-                const converted = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+                let finalResult = result;
+                
+                if (targetUnit) {
+                    finalResult = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+                }
+                
                 return {
                     type: 'expression_result',
                     content: line,
                     description: description,
                     expression: expression,
-                    result: this.formatNumber(converted, precision),
+                    result: this.formatNumber(finalResult, precision),
                     precision: precision
                 };
             } catch (error) {
