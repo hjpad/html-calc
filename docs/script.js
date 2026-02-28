@@ -416,6 +416,50 @@ class HTMLCalcApp {
             // Trigger initial calculation
             this.calculate();
         }
+        
+        // Setup scroll synchronization
+        this.setupScrollSync();
+    }
+
+    setupScrollSync() {
+        let isInputScrolling = false;
+        let isOutputScrolling = false;
+        
+        this.inputEditor.addEventListener('scroll', () => {
+            if (isOutputScrolling) return;
+            
+            isInputScrolling = true;
+            
+            const inputScrollPercentage = this.inputEditor.scrollTop / 
+                (this.inputEditor.scrollHeight - this.inputEditor.clientHeight);
+            
+            const outputScrollTop = inputScrollPercentage * 
+                (this.outputPreview.scrollHeight - this.outputPreview.clientHeight);
+            
+            this.outputPreview.scrollTop = outputScrollTop;
+            
+            setTimeout(() => {
+                isInputScrolling = false;
+            }, 100);
+        });
+        
+        this.outputPreview.addEventListener('scroll', () => {
+            if (isInputScrolling) return;
+            
+            isOutputScrolling = true;
+            
+            const outputScrollPercentage = this.outputPreview.scrollTop / 
+                (this.outputPreview.scrollHeight - this.outputPreview.clientHeight);
+            
+            const inputScrollTop = outputScrollPercentage * 
+                (this.inputEditor.scrollHeight - this.inputEditor.clientHeight);
+            
+            this.inputEditor.scrollTop = inputScrollTop;
+            
+            setTimeout(() => {
+                isOutputScrolling = false;
+            }, 100);
+        });
     }
 
     calculate() {
