@@ -384,29 +384,38 @@ class HTMLCalcApp {
         this.engine = new CalcPadEngine();
         this.inputEditor = document.getElementById('inputEditor');
         this.outputPreview = document.getElementById('outputPreview');
-        this.calculateBtn = document.getElementById('calculateBtn');
 
         this.init();
     }
 
     init() {
-        this.calculateBtn.addEventListener('click', () => this.calculate());
+        let debounceTimer;
+        const calculatingIndicator = document.querySelector('.calculating-indicator');
         
-        this.inputEditor.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
+        this.inputEditor.addEventListener('input', () => {
+            // Clear existing timer
+            clearTimeout(debounceTimer);
+            
+            // Show calculating indicator
+            calculatingIndicator.classList.remove('hidden');
+            
+            // Save to localStorage
+            localStorage.setItem('htmlcalc_input', this.inputEditor.value);
+            
+            // Set new timer for auto-calculation
+            debounceTimer = setTimeout(() => {
                 this.calculate();
-            }
+                // Hide calculating indicator after calculation
+                calculatingIndicator.classList.add('hidden');
+            }, 2000);
         });
 
         const savedInput = localStorage.getItem('htmlcalc_input');
         if (savedInput) {
             this.inputEditor.value = savedInput;
+            // Trigger initial calculation
+            this.calculate();
         }
-
-        this.inputEditor.addEventListener('input', () => {
-            localStorage.setItem('htmlcalc_input', this.inputEditor.value);
-        });
     }
 
     calculate() {

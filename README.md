@@ -112,7 +112,7 @@ python -m http.server 8017
 npx http-server -p 8017
 ```
 
-Then visit `http://localhost:8000/docs/`
+Then visit `http://localhost:8017`
 
 ### Project Structure
 ```
@@ -120,7 +120,10 @@ html-calc/
 ├── docs/
 │   ├── index.html       # Main HTML file
 │   ├── styles.css       # Custom styles
-│   └── script.js        # Application logic
+│   ├── script.js        # Application logic
+│   ├── images/          # Images folder (optional)
+│   ├── site.webmanifest # Web app manifest (optional)
+│   └── sw.js            # Service worker (optional)
 ├── README.md            # This file
 └── APP_DESCRIPTION.md   # Developer documentation
 ```

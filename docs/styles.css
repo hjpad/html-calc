@@ -24,11 +24,11 @@ header {
     font-weight: 600;
 }
 
-#calculateBtn {
+/* #calculateBtn {
     font-weight: 500;
     padding: 0.5rem 1.5rem;
     transition: all 0.3s ease;
-}
+} */
 
 #calculateBtn:hover {
     transform: translateY(-2px);
@@ -70,6 +70,22 @@ header {
 .panel-header h6 {
     color: #495057;
     font-weight: 600;
+}
+
+.calculating-indicator {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #0d6efd;
+    animation: spin 1s linear infinite;
+}
+
+.calculating-indicator.hidden {
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .editor-textarea {
