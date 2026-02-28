@@ -334,28 +334,45 @@ header {
     box-shadow: none;
 }
 
-.dropdown-menu #fontSizeInput {
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-    border: none;
-    background: transparent;
-}
-
-.dropdown-menu #fontSizeInput:focus {
-    outline: none;
-    box-shadow: none;
-}
-
+/* Remove spinners from font size input */
 .dropdown-menu #fontSizeInput::-webkit-inner-spin-button,
 .dropdown-menu #fontSizeInput::-webkit-outer-spin-button {
-    opacity: 1;
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-/* Dark theme for font size input */
+.dropdown-menu #fontSizeInput {
+    -moz-appearance: textfield;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    width: 60px;
+}
+
+/* Style the +/- buttons */
+.dropdown-menu #decreaseFontSize,
+.dropdown-menu #increaseFontSize {
+    border: 1px solid #dee2e6;
+    padding: 0.25rem 0.5rem;
+    min-width: 32px;
+}
+
+/* Adjust gap between buttons and input */
+.dropdown-menu .d-flex.gap-2 {
+    gap: 0.25rem !important;
+}
+
+/* Dark theme styles for font size controls */
 [data-bs-theme="dark"] .dropdown-menu #fontSizeInput {
-    background-color: transparent;
-    color: #dee2e6;
-    border: none;
+    background: #2b3035;
+    border-color: #495057;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .dropdown-menu #decreaseFontSize,
+[data-bs-theme="dark"] .dropdown-menu #increaseFontSize {
+    border-color: #495057;
 }
 
 /* Dark theme styles */

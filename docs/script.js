@@ -601,21 +601,32 @@ class HTMLCalcApp {
 
     setupFontSizeControl() {
         const fontSizeInput = document.getElementById('fontSizeInput');
+        const decreaseBtn = document.getElementById('decreaseFontSize');
+        const increaseBtn = document.getElementById('increaseFontSize');
         
         // Load saved font size or default to 100
         const savedFontSize = localStorage.getItem('fontSize') || '100';
         fontSizeInput.value = savedFontSize;
         this.applyFontSize(savedFontSize);
         
-        // Handle input changes
-        fontSizeInput.addEventListener('input', (e) => {
-            let value = parseInt(e.target.value);
-            
-            // Validate range
-            if (value < 50) value = 50;
-            if (value > 200) value = 200;
-            
-            e.target.value = value;
+        // Decrease button
+        decreaseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent dropdown from closing
+            let value = parseInt(fontSizeInput.value);
+            value = Math.max(50, value - 5);
+            fontSizeInput.value = value;
+            this.applyFontSize(value);
+            localStorage.setItem('fontSize', value);
+        });
+        
+        // Increase button
+        increaseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent dropdown from closing
+            let value = parseInt(fontSizeInput.value);
+            value = Math.min(200, value + 5);
+            fontSizeInput.value = value;
             this.applyFontSize(value);
             localStorage.setItem('fontSize', value);
         });

@@ -46,9 +46,16 @@
                     <li class="px-3 py-2">
                         <div class="d-flex align-items-center gap-2">
                             <span class="text-muted small">Size:</span>
+                            <button class="btn btn-sm btn-outline-secondary" id="decreaseFontSize">
+                                <i class="bi bi-dash"></i>
+                            </button>
                             <input type="number" class="form-control form-control-sm text-center" id="fontSizeInput" 
-                                value="100" min="50" max="200" step="5" style="width: 70px;" placeholder="100%">
+                                value="100" min="50" max="200" step="5" placeholder="100%" readonly>
+                            <button class="btn btn-sm btn-outline-secondary" id="increaseFontSize">
+                                <i class="bi bi-plus"></i>
+                            </button>
                         </div>
+                    </li>
                     </li>
                 </ul>
             </div>
