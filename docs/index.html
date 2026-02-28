@@ -33,7 +33,14 @@
         <div class="row h-100">
             <div class="col-md-6 editor-panel">
                 <div class="panel-header">
-                    <h6 class="mb-0"><i class="bi bi-pencil-square"></i> Input Editor</h6>
+                    <h6 class="mb-0">
+                        <span class="input-header-content">
+                            <i class="bi bi-pencil-square"></i> Input Editor
+                        </span>
+                        <span class="mobile-view-toggle" id="showOutputBtn">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </h6>
                 </div>
                 <textarea id="inputEditor" class="form-control editor-textarea" placeholder="Enter your markdown and formulas here...
 
@@ -54,7 +61,12 @@ The area is: {area}"></textarea>
             <div class="col-md-6 output-panel">
                 <div class="panel-header">
                     <h6 class="mb-0">
-                        <i class="bi bi-eye"></i> Output View
+                        <span class="mobile-view-toggle" id="showInputBtn">
+                            <i class="bi bi-pencil-square"></i>
+                        </span>
+                        <span class="output-header-content">
+                            <i class="bi bi-eye"></i> Output View
+                        </span>
                         <i class="bi bi-arrow-repeat calculating-indicator hidden"></i>
                     </h6>
                 </div>

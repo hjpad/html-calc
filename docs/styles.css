@@ -70,6 +70,19 @@ header {
 .panel-header h6 {
     color: #495057;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-header-content {
+    flex: 1;
+    text-align: left;
+}
+
+.output-header-content {
+    flex: 1;
+    text-align: right;
 }
 
 .calculating-indicator {
@@ -222,13 +235,60 @@ header {
 
     .editor-panel,
     .output-panel {
-        height: 50%;
+        height: 100%;
         border-right: none;
         border-left: none;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: none;
+        position: absolute;
+        top: 56px; /* Height of navbar */
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: transform 0.3s ease;
+    }
+
+    .editor-panel {
+        transform: translateX(0);
+        z-index: 2;
+    }
+
+    .editor-panel.hidden {
+        transform: translateX(-100%);
     }
 
     .output-panel {
-        border-bottom: none;
+        transform: translateX(100%);
+        z-index: 1;
+    }
+
+    .output-panel.visible {
+        transform: translateX(0);
+        z-index: 2;
+    }
+
+    .mobile-view-toggle {
+        display: inline-block;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s;
+    }
+
+    .mobile-view-toggle:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-view-toggle.hidden {
+        display: none;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-view-toggle {
+        display: none;
+    }
+    
+    .output-header-content {
+        text-align: left;
     }
 }

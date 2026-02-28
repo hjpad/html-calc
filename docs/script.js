@@ -419,6 +419,9 @@ class HTMLCalcApp {
         
         // Setup scroll synchronization
         this.setupScrollSync();
+
+        // Setup mobile view toggle
+        this.setupMobileViewToggle();
     }
 
     setupScrollSync() {
@@ -459,6 +462,50 @@ class HTMLCalcApp {
             setTimeout(() => {
                 isOutputScrolling = false;
             }, 100);
+        });
+    }
+
+    setupMobileViewToggle() {
+        const showOutputBtn = document.getElementById('showOutputBtn');
+        const showInputBtn = document.getElementById('showInputBtn');
+        const editorPanel = document.querySelector('.editor-panel');
+        const outputPanel = document.querySelector('.output-panel');
+        
+        showOutputBtn.addEventListener('click', () => {
+            // Calculate before showing output
+            this.calculate();
+            
+            // Save current scroll position of input
+            const inputScrollPercentage = this.inputEditor.scrollTop / 
+                (this.inputEditor.scrollHeight - this.inputEditor.clientHeight);
+            
+            // Show output panel
+            editorPanel.classList.add('hidden');
+            outputPanel.classList.add('visible');
+            
+            // Sync scroll position to output
+            setTimeout(() => {
+                const outputScrollTop = inputScrollPercentage * 
+                    (this.outputPreview.scrollHeight - this.outputPreview.clientHeight);
+                this.outputPreview.scrollTop = outputScrollTop;
+            }, 50);
+        });
+        
+        showInputBtn.addEventListener('click', () => {
+            // Save current scroll position of output
+            const outputScrollPercentage = this.outputPreview.scrollTop / 
+                (this.outputPreview.scrollHeight - this.outputPreview.clientHeight);
+            
+            // Show input panel
+            outputPanel.classList.remove('visible');
+            editorPanel.classList.remove('hidden');
+            
+            // Sync scroll position to input
+            setTimeout(() => {
+                const inputScrollTop = outputScrollPercentage * 
+                    (this.inputEditor.scrollHeight - this.inputEditor.clientHeight);
+                this.inputEditor.scrollTop = inputScrollTop;
+            }, 50);
         });
     }
 
