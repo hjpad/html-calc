@@ -13,19 +13,62 @@ class CalcPadEngine {
             number: 'BigNumber',
             precision: 64
         });
+
+        // Initialize units handler
+        this.unitsHandler = new UnitsHandler();
+    }
+
+    async ensureUnitsLoaded() {
+        if (!this.unitsHandler.loaded) {
+            await this.unitsHandler.loadConfig();
+        }
+    }
+
+    // Modify the convertUnit helper method (add this new method)
+    async convertWithUnits(value, targetUnit) {
+        await this.ensureUnitsLoaded();
+        
+        // Extract numeric value and source unit if value is a Unit object
+        let numericValue = value;
+        let sourceUnit = null;
+        
+        // if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'Unit') {
+        //     numericValue = parseFloat(value.toNumber());
+        //     sourceUnit = value.formatUnits();
+        // }
+        
+        // // Try custom units first
+        // if (sourceUnit && this.unitsHandler.canConvert(sourceUnit, targetUnit)) {
+        //     const result = this.unitsHandler.convert(numericValue, sourceUnit, targetUnit);
+        //     if (result !== null) {
+        //         return result;
+        //     }
+        // }
+        
+        // Fall back to math.js
+        try {
+            return this.unitMath.evaluate(`${value} to ${targetUnit}`);
+        } catch (error) {
+            // If math.js fails, try custom conversion without source unit
+            const result = this.unitsHandler.convert(numericValue, targetUnit, targetUnit);
+            if (result !== null) {
+                return result;
+            }
+            throw error;
+        }
     }
 
     reset() {
         this.variables = {};
     }
 
-    processLine(line) {
+    async processLine(line) {
         const trimmedLine = line.trim();
         
         if (!trimmedLine || trimmedLine.startsWith('#')) {
             return { type: 'text', content: line };
         }
-    
+
         // Extract and remove description (text in single quotes)
         let description = '';
         let cleanLine = trimmedLine;
@@ -35,63 +78,81 @@ class CalcPadEngine {
             description = descriptionMatch[1];
             cleanLine = descriptionMatch[2].trim();
         }
-    
+
+        // Normalize temperature units before processing
+        // Replace °C with degC, °F with degF
+        cleanLine = cleanLine.replace(/°C/g, 'degC');
+        cleanLine = cleanLine.replace(/°F/g, 'degF');
+        // Be careful with standalone C and F - only replace if they're clearly units
+        // Don't replace C or F that are part of variable names
+        cleanLine = cleanLine.replace(/(\d+)\s*C\b/g, '$1 degC'); // Number followed by C
+        cleanLine = cleanLine.replace(/(\d+)\s*F\b/g, '$1 degF'); // Number followed by F
+
         // Check for assignment with trailing "=" and optional precision/unit in either order
-    let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
-    if (assignmentWithResultMatch) {
-        const varName = assignmentWithResultMatch[1];
-        const expression = assignmentWithResultMatch[2].trim();
-        const bracketContent = assignmentWithResultMatch[3].trim();
-        
-        // Parse bracket content - could be "2, mm" or "mm, 2"
-        const parts = bracketContent.split(',').map(p => p.trim());
-        let precision = null;
-        let targetUnit = null;
-        
-        if (parts.length === 2) {
-            // Check which part is the number
-            if (!isNaN(parts[0])) {
-                precision = parseInt(parts[0]);
-                targetUnit = parts[1];
-            } else if (!isNaN(parts[1])) {
-                precision = parseInt(parts[1]);
-                targetUnit = parts[0];
-            }
-        } else if (parts.length === 1) {
-            // Single value - check if it's a number or unit
-            if (!isNaN(parts[0])) {
-                precision = parseInt(parts[0]);
-            } else {
-                targetUnit = parts[0];
-            }
-        }
-        
-        try {
-            const result = this.evaluate(expression);
-            let finalResult = result;
+        let assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\]]+)\]\s*$/);
+        if (assignmentWithResultMatch) {
+            const varName = assignmentWithResultMatch[1];
+            const expression = assignmentWithResultMatch[2].trim();
+            const bracketContent = assignmentWithResultMatch[3].trim();
             
-            if (targetUnit) {
-                finalResult = this.unitMath.evaluate(`${result} to ${targetUnit}`);
+            // Parse bracket content - could be "2, mm" or "mm, 2"
+            const parts = bracketContent.split(',').map(p => p.trim());
+            let precision = null;
+            let targetUnit = null;
+            
+            if (parts.length === 2) {
+                // Check which part is the number
+                if (!isNaN(parts[0])) {
+                    precision = parseInt(parts[0]);
+                    targetUnit = parts[1];
+                } else if (!isNaN(parts[1])) {
+                    precision = parseInt(parts[1]);
+                    targetUnit = parts[0];
+                }
+            } else if (parts.length === 1) {
+                // Single value - check if it's a number or unit
+                if (!isNaN(parts[0])) {
+                    precision = parseInt(parts[0]);
+                } else {
+                    targetUnit = parts[0];
+                }
             }
             
-            this.variables[varName] = finalResult;
-            return {
-                type: 'calculation_with_result',
-                content: line,
-                description: description,
-                variable: varName,
-                expression: expression,
-                result: this.formatNumber(finalResult, precision),
-                precision: precision
-            };
-        } catch (error) {
-            return {
-                type: 'error',
-                content: line,
-                error: error.message
-            };
+            try {
+                const result = this.evaluate(expression);
+                let finalResult = result;
+                
+                if (targetUnit) {
+                    try {
+                        finalResult = await this.convertWithUnits(result, targetUnit);
+                    } catch (convError) {
+                        return {
+                            type: 'error',
+                            content: line,
+                            error: `Error #132: ${convError.message}`
+                        };
+                    }
+                }
+                
+                this.variables[varName] = finalResult;
+                return {
+                    type: 'calculation_with_result',
+                    content: line,
+                    description: description,
+                    variable: varName,
+                    expression: expression,
+                    result: this.formatNumber(finalResult, precision),
+                    precision: precision
+                };
+
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: `Error #152: ${error.message}`
+                };
+            }
         }
-    }
         
         // Check for assignment with unit only (e.g., "speed = 100 km/h = [m/s]")
         assignmentWithResultMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*=\s*\[([^\],\d][^\]]*)\]\s*$/);
@@ -117,7 +178,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #181: ${error.message}`
                 };
             }
         }
@@ -172,7 +233,41 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #236: ${error.message}`
+                };
+            }
+        }
+
+        // Check for assignment with unit conversion in brackets (e.g., "var = expression [unit]")
+        let assignmentWithUnitConversionMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*\[([^\]]+)\]\s*$/);
+        if (assignmentWithUnitConversionMatch) {
+            const varName = assignmentWithUnitConversionMatch[1];
+            const expression = assignmentWithUnitConversionMatch[2].trim();
+            const bracketContent = assignmentWithUnitConversionMatch[3].trim();
+
+            // This regex is simpler and assumes the bracket only contains the unit
+            const targetUnit = bracketContent;
+            
+            try {
+                const result = this.evaluate(expression);
+                const finalResult = await this.convertWithUnits(result, targetUnit);
+                
+                this.variables[varName] = finalResult;
+                
+                return {
+                    type: 'calculation_with_result',
+                    content: line,
+                    description: description,
+                    variable: varName,
+                    expression: expression,
+                    result: this.formatNumber(finalResult, null) + ` ${targetUnit}`,
+                    precision: null
+                };
+            } catch (error) {
+                return {
+                    type: 'error',
+                    content: line,
+                    error: `Assignment/Conversion Error: ${error.message}`
                 };
             }
         }
@@ -226,7 +321,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #290: ${error.message}`
                 };
             }
         }
@@ -252,7 +347,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #316: ${error.message}`
                 };
             }
         }
@@ -277,7 +372,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #341: ${error.message}`
                 };
             }
         }
@@ -301,7 +396,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #365: ${error.message}`
                 };
             }
         }
@@ -328,7 +423,7 @@ class CalcPadEngine {
                 return {
                     type: 'error',
                     content: line,
-                    error: error.message
+                    error: `Error #393: ${error.message}`
                 };
             }
         }
@@ -343,7 +438,7 @@ class CalcPadEngine {
                     const result = this.evaluate(expr);
                     processedLine = processedLine.replace(match, `**${this.formatNumber(result)}**`);
                 } catch (error) {
-                    processedLine = processedLine.replace(match, `[Error: ${error.message}]`);
+                    processedLine = processedLine.replace(match, `[Error #407: ${error.message}]`);
                 }
             });
             return { type: 'text', content: processedLine };
@@ -420,14 +515,16 @@ class CalcPadEngine {
         return num.toString();
     }
 
-    process(input) {
+    async process(input) {
         this.reset();
         const lines = input.split('\n');
         const processedLines = [];
 
-        lines.forEach(line => {
-            processedLines.push(this.processLine(line));
-        });
+        // Process all lines and await their results
+        for (const line of lines) {
+            const result = await this.processLine(line);
+            processedLines.push(result);
+        }
 
         return processedLines;
     }
@@ -697,7 +794,7 @@ class HTMLCalcApp {
         this.outputPreview.style.fontSize = `${newFontSize}px`;
     }
 
-    calculate() {
+    async calculate() {
         const input = this.inputEditor.value;
         
         if (!input.trim()) {
@@ -710,12 +807,10 @@ class HTMLCalcApp {
             return;
         }
 
-        const processedLines = this.engine.process(input);
+        const processedLines = await this.engine.process(input);
         const output = this.renderOutput(processedLines);
         this.outputPreview.innerHTML = output;
     }
-
-    
     
     renderOutput(processedLines) {
         let htmlParts = [];
@@ -741,7 +836,7 @@ class HTMLCalcApp {
                 const formattedContent = this.formatExpression(displayContent);
                 htmlParts.push(`<div class="calculation-line">${desc}${formattedContent}</div>`);
             } else if (line.type === 'error') {
-                htmlParts.push(`<div class="error-message"><strong>Error:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>`);
+                htmlParts.push(`<div class="error-message"><strong>Error #805:</strong> ${this.escapeHtml(line.error)}<br><code>${this.escapeHtml(line.content)}</code></div>`);
             } else {
                 // Regular text or interpolated text - parse as markdown
                 const htmlOutput = marked.parse(line.content);

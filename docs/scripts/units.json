@@ -1,0 +1,23 @@
+{
+  "temperature": {
+    "units": ["°C", "degC", "°F", "degF", "K"],
+    "symbolMap": {
+      "°C": "degC",
+      "°F": "degF"
+    },
+    "conversions": {
+      "°C": {
+        "°F": {"formula": "(x * 9/5) + 32"},
+        "K": {"formula": "x + 273.15"}
+      },
+      "°F": {
+        "°C": {"formula": "(x - 32) * 5/9"},
+        "K": {"formula": "((x - 32) * 5/9) + 273.15"}
+      },
+      "K": {
+        "°C": {"formula": "x - 273.15"},
+        "°F": {"formula": "((x - 273.15) * 9/5) + 32"}
+      }
+    }
+  }
+}
