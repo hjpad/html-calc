@@ -107,7 +107,7 @@ header {
     border-radius: 0;
     resize: none;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
+    font-size: 17px;
     padding: 1rem;
     line-height: 1.6;
 }
@@ -314,4 +314,69 @@ header {
     .output-header-content {
         text-align: left;
     }
+}
+
+.dropdown-menu .btn-outline-secondary {
+    border: none;
+    background: none;
+    color: #6c757d;
+    padding: 0.25rem 0.5rem;
+}
+
+.dropdown-menu .btn-outline-secondary:hover {
+    background: none;
+    color: #495057;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu .btn-outline-secondary.active {
+    background: none;
+    border: none;
+    color: #0d6efd;
+}
+
+.dropdown-menu .btn-outline-secondary:focus {
+    box-shadow: none;
+}
+
+/* Dark theme styles */
+[data-bs-theme="dark"] {
+    background-color: #212529;
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .editor-textarea {
+    background-color: #2b3035;
+    color: #dee2e6;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .output-content {
+    background-color: #2b3035;
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .panel-header {
+    background-color: #343a40;
+    border-bottom-color: #495057;
+}
+
+[data-bs-theme="dark"] .output-panel {
+    border-right-color: #495057;
+}
+
+[data-bs-theme="dark"] .calculation-result {
+    background-color: #1a1d20;
+    border-left-color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .output-content code {
+    background-color: #1a1d20;
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .output-content pre {
+    background-color: #1a1d20;
+    border-color: #495057;
 }

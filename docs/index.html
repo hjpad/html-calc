@@ -26,6 +26,24 @@
             <a href="https://github.com/hjpad/html-calc" target="_blank" class="navbar-brand mb-0 h1 text-decoration-none">
                 <i class="bi bi-calculator"></i> html_calc
             </a>
+            <div class="dropdown">
+                <button class="btn btn-link text-white p-0" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
+                    <li class="px-3 py-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-muted small">Mode:</span>
+                            <button class="btn btn-sm btn-outline-secondary" id="lightTheme" title="Light Mode">
+                                <i class="bi bi-sun"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="darkTheme" title="Dark Mode">
+                                <i class="bi bi-moon"></i>
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
     </header>
 

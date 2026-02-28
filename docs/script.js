@@ -425,6 +425,9 @@ class HTMLCalcApp {
 
         // Setup swipe gestures
         this.setupSwipeGestures();
+
+        // Setup theme toggle
+        this.setupThemeToggle();
     }
 
     setupScrollSync() {
@@ -559,6 +562,38 @@ class HTMLCalcApp {
                 document.getElementById('showInputBtn').click();
             }
         };
+    }
+
+    setupThemeToggle() {
+        const lightThemeBtn = document.getElementById('lightTheme');
+        const darkThemeBtn = document.getElementById('darkTheme');
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        
+        // Set active button based on saved theme
+        if (savedTheme === 'light') {
+            lightThemeBtn.classList.add('active');
+        } else {
+            darkThemeBtn.classList.add('active');
+        }
+        
+        lightThemeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            lightThemeBtn.classList.add('active');
+            darkThemeBtn.classList.remove('active');
+        });
+        
+        darkThemeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            darkThemeBtn.classList.add('active');
+            lightThemeBtn.classList.remove('active');
+        });
     }
 
     calculate() {
